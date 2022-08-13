@@ -1,14 +1,14 @@
 from datetime import datetime
 
-from app.constants import GOOGLE_CALENDAR_STRPTME_FMT, GOOGLE_CALENDAR_STRPTME_FMT_DT
+from constants import GOOGLE_CALENDAR_STRPTME_FMT, GOOGLE_CALENDAR_STRPTME_FMT_DT
 
 
 class Calendar:
 
-    def __init__(self, name, calendar_id, service):
+    def __init__(self, name, calendar_id, resource):
         self.name = name
         self.calendar_id = calendar_id
-        self.service = service
+        self.resource = resource
 
         self.events = []
 
@@ -40,7 +40,7 @@ class Calendar:
     def _fetch_events(self):
         now = datetime.now().strftime('%Y-%m-%dT%H:%M:%S') + '-04:00'
 
-        return self.service.events().list(
+        return self.resource.events().list(
             calendarId=self.calendar_id,
             maxResults=2000,
             timeMin=now

@@ -4,6 +4,7 @@ from datetime import datetime, timedelta, date
 from googleapiclient.discovery import build
 from google_auth_oauthlib.flow import InstalledAppFlow
 import pickle
+import settings.config as config
 
 
 ###########################################################################
@@ -11,17 +12,17 @@ import pickle
 ###########################################################################
 
 
-NOTION_TOKEN = "" #the secret_something from Notion Integration
+NOTION_TOKEN = config.NOTION_TOKEN  #the secret_something from Notion Integration
 
-database_id = "" #get the mess of numbers before the "?" on your dashboard URL (no need to split into dashes)
+database_id = config.DATABASE_ID #get the mess of numbers before the "?" on your dashboard URL (no need to split into dashes)
 
-urlRoot = 'https://www.notion.so/akarri/2583098dfd32472ab6ca1ff2a8b2866d?v=3a1adf60f15748f08ed925a2eca88421&p=' #open up a task and then copy the URL root up to the "p="
+urlRoot = config.ROOT_URL #open up a task and then copy the URL root up to the "p="
 
 runScript = "python3 GCalToken.py" #This is the command you will be feeding into the command prompt to run the GCalToken program
 
 #GCal Set Up Part
 
-credentialsLocation = "token.pkl" #This is where you keep the pickle file that has the Google Calendar Credentials
+credentialsLocation = config.CREDS_PATH #This is where you keep the pickle file that has the Google Calendar Credentials
 
 
 DEFAULT_EVENT_LENGTH = 60 #This is how many minutes the default event length is. Feel free to change it as you please
@@ -52,17 +53,15 @@ AllDayEventOption = 0 #0 if you want dates on your Notion dashboard to be treate
 #  - VERY IMPORTANT: For each 'key' of the dictionary, make sure that you make that EXACT thing in the Notion database first before running the code. You WILL have an error and your dashboard/calendar will be messed up
 
 
-DEFAULT_CALENDAR_ID = '565bdjsqmautc214vcimtn5kso@group.calendar.google.com' #The GCal calendar id. The format is something like "sldkjfliksedjgodsfhgshglsj@group.calendar.google.com"
+DEFAULT_CALENDAR_ID = config.DEFAULT_CALENDAR_ID #The GCal calendar id. The format is something like "sldkjfliksedjgodsfhgshglsj@group.calendar.google.com"
 
-DEFAULT_CALENDAR_NAME = 'Test'
+DEFAULT_CALENDAR_NAME = config.DEFAULT_CALENDAR_NAME
 
 
 #leave the first entry as is
 #the structure should be as follows:              WHAT_THE_OPTION_IN_NOTION_IS_CALLED : GCAL_CALENDAR_ID 
 calendarDictionary = {
-    DEFAULT_CALENDAR_NAME : DEFAULT_CALENDAR_ID, 
-    'Test' : 'fd34893uklhjdflgkjsdafdfjklsd@group.calendar.google.com', #just typed some random ids but put the one for your calendars here
-    'New Test' : 'skdhvjhefoierjkh345378khkh@group.calendar.google.com'
+    DEFAULT_CALENDAR_NAME : DEFAULT_CALENDAR_ID,
 }
 
 
@@ -1253,7 +1252,7 @@ calItems = events
 
 calName = [item['summary'] for item in calItems]
 
-gCal_calendarId = [item['organizer']['email'] for item in calItems] #this is to get all of the calendarIds for each event
+gCal_calendarId = [item['creator']['email'] for item in calItems] #this is to get all of the calendarIds for each event
 
 CalNames = list(calendarDictionary.keys())
 CalIds = list(calendarDictionary.values())

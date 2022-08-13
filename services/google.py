@@ -1,7 +1,7 @@
 import logging
 import pickle
 
-from app.constants import CLIENT_SECRET_FILE_NAME, GOOGLE_CALENDAR_API_URL
+from constants import CLIENT_SECRET_FILE_NAME, GOOGLE_CALENDAR_API_URL
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 from google_auth_oauthlib.flow import InstalledAppFlow
@@ -13,7 +13,7 @@ class GoogleService:
         self.credentials = self.get_credentials()
         self.service = build('calendar', 'v3', credentials=self.credentials)
 
-    def get_calendar(self, calendar_id):
+    def get_calendar_resource(self, calendar_id):
         try:
             calendar = self.service.calendars().get(calendarId=calendar_id).execute()
             return calendar
