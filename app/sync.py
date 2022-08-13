@@ -1,41 +1,27 @@
 import os
 import pickle
 
-from config import DATABASE_ID, NOTION_TOKEN
+from config import CREDS_PATH, DATABASE_ID, NOTION_TOKEN, PROJECT_PATH, ROOT_URL
 from datetime import datetime, timedelta
 from googleapiclient.discovery import build
 from notion_client import Client
 
-
-###########################################################################
-##### The Set-Up Section. Please follow the comments to understand the code. 
-###########################################################################
-
-database_id = "001c20e4674146f2af38ae27105fec9a" #get the mess of numbers before the "?" on your dashboard URL (no need to split into dashes)
-
-urlRoot = 'https://www.notion.so/addie-morang/001c20e4674146f2af38ae27105fec9a?v=8275a4c133704d8bab6ecef8ba3fdc2b&p=' #open up a task and then copy the URL root up to the "p="
-
-runScript = "python3 /Users/addiemorang/notion/Notion-and-Google-Calendar-2-Way-Sync/GCalToken.py" #This is the command you will be feeding into the command prompt to run the GCalToken program
-
-#GCal Set Up Part
-
-credentialsLocation = "/Users/addiemorang/notion/Notion-and-Google-Calendar-2-Way-Sync/token.pkl" #This is where you keep the pickle file that has the Google Calendar Credentials
-
+runScript = f'python3 {PROJECT_PATH}/setup.py'
 
 DEFAULT_EVENT_LENGTH = 60 #This is how many minutes the default event length is. Feel free to change it as you please
 timezone = 'America/New_York' #Choose your respective time zone: http://www.timezoneconverter.com/cgi-bin/zonehelp.tzc
 
 def notion_time():
-    return datetime.now().strftime("%Y-%m-%dT%H:%M:%S-04:00") #Change the last 5 characters to be representative of your timezone
+    return datetime.now().strftime('%Y-%m-%dT%H:%M:%S-04:00') #Change the last 5 characters to be representative of your timezone
      #^^ has to be adjusted for when daylight savings is different if your area observes it
     
 def DateTimeIntoNotionFormat(dateTimeValue):
-    return dateTimeValue.strftime("%Y-%m-%dT%H:%M:%S-04:00")  #Change the last 5 characters to be representative of your timezone
+    return dateTimeValue.strftime('%Y-%m-%dT%H:%M:%S-04:00')  #Change the last 5 characters to be representative of your timezone
      #^^ has to be adjusted for when daylight savings is different if your area observes it
 
 
 def googleQuery():
-    return datetime.now().strftime("%Y-%m-%dT%H:%M:%S")+"-04:00" #Change the last 5 characters to be representative of your timezone
+    return datetime.now().strftime('%Y-%m-%dT%H:%M:%S')+'-04:00' #Change the last 5 characters to be representative of your timezone
      #^^ has to be adjusted for when daylight savings is different if your area observes it
 
 
@@ -50,7 +36,7 @@ AllDayEventOption = 0 #0 if you want dates on your Notion dashboard to be treate
 #  - VERY IMPORTANT: For each 'key' of the dictionary, make sure that you make that EXACT thing in the Notion database first before running the code. You WILL have an error and your dashboard/calendar will be messed up
 
 
-DEFAULT_CALENDAR_ID = 'addmorang@gmail.com' #The GCal calendar id. The format is something like "sldkjfliksedjgodsfhgshglsj@group.calendar.google.com"
+DEFAULT_CALENDAR_ID = 'addmorang@gmail.com' #The GCal calendar id. The format is something like 'sldkjfliksedjgodsfhgshglsj@group.calendar.google.com'
 
 DEFAULT_CALENDAR_NAME = 'Test'
 
@@ -72,7 +58,7 @@ DELETE_OPTION = 0
 
 # There needs to be a few properties on the Notion Database for this to work. Replace the values of each variable with the string of what the variable is called on your Notion dashboard
 # The Last Edited Time column is a property of the notion pages themselves, you just have to make it a column
-# The NeedGCalUpdate column is a formula column that works as such "if(prop("Last Edited Time") > prop("Last Updated Time"), true, false)"
+# The NeedGCalUpdate column is a formula column that works as such 'if(prop('Last Edited Time') > prop('Last Updated Time'), true, false)'
 #Please refer to the Template if you are confused: https://www.notion.so/akarri/2583098dfd32472ab6ca1ff2a8b2866d?v=3a1adf60f15748f08ed925a2eca88421
 
 
@@ -97,8 +83,8 @@ Delete_Notion_Name = 'Done?'
 
 #SET UP THE GOOGLE CALENDAR API INTERFACE
 
-credentials = pickle.load(open(credentialsLocation, "rb"))
-service = build("calendar", "v3", credentials=credentials)
+credentials = pickle.load(open(CREDS_PATH, 'rb'))
+service = build('calendar', 'v3', credentials=credentials)
 
 
 #There could be a hiccup if the Google Calendar API token expires. 
@@ -109,12 +95,12 @@ try:
 except:
     #refresh the token
     import os
-    os.system(runScript)    
+    os.system(runScript)
     
     #SET UP THE GOOGLE CALENDAR API INTERFACE
 
-    credentials = pickle.load(open(credentialsLocation, "rb"))
-    service = build("calendar", "v3", credentials=credentials)
+    credentials = pickle.load(open(CREDS_PATH, 'rb'))
+    service = build('calendar', 'v3', credentials=credentials)
 
     # result = service.calendarList().list().execute()
     # print(result['items'][:])
@@ -125,7 +111,7 @@ except:
 
 ##This is where we set up the connection with the Notion API
 os.environ['NOTION_TOKEN'] = NOTION_TOKEN
-notion = Client(auth=os.environ["NOTION_TOKEN"])
+notion = Client(auth=os.environ['NOTION_TOKEN'])
 
 
 
@@ -145,7 +131,7 @@ notion = Client(auth=os.environ["NOTION_TOKEN"])
 def makeEventDescription(initiative, info):
     if initiative == '' and info == '':
         return ''
-    elif info == "":
+    elif info == '':
         return initiative
     elif initiative == '':
         return info
@@ -157,10 +143,10 @@ def makeEventDescription(initiative, info):
 #METHOD TO MAKE A TASK'S URL
 #To make a url for the notion task, we have to take the id of the task and take away the hyphens from the string
 
-def makeTaskURL(ending, urlRoot):
+def makeTaskURL(ending, ROOT_URL):
     # urlId = ending[0:8] + ending[9:13] + ending[14:18] + ending[19:23] + ending[24:]  #<--- super inefficient way to do things lol
     urlId = ending.replace('-', '')
-    return urlRoot + urlId
+    return ROOT_URL + urlId
 
 
 ######################################################################
@@ -177,11 +163,11 @@ def makeCalEvent(eventName, eventDescription, eventStartTime, sourceURL, eventEn
                 'summary': eventName,
                 'description': eventDescription,
                 'start': {
-                    'dateTime': eventStartTime.strftime("%Y-%m-%dT%H:%M:%S"),
+                    'dateTime': eventStartTime.strftime('%Y-%m-%dT%H:%M:%S'),
                     'timeZone': timezone,
                 },
                 'end': {
-                    'dateTime': eventEndTime.strftime("%Y-%m-%dT%H:%M:%S"),
+                    'dateTime': eventEndTime.strftime('%Y-%m-%dT%H:%M:%S'),
                     'timeZone': timezone,
                 }, 
                 'source': {
@@ -195,11 +181,11 @@ def makeCalEvent(eventName, eventDescription, eventStartTime, sourceURL, eventEn
                 'summary': eventName,
                 'description': eventDescription,
                 'start': {
-                    'date': eventStartTime.strftime("%Y-%m-%d"),
+                    'date': eventStartTime.strftime('%Y-%m-%d'),
                     'timeZone': timezone,
                 },
                 'end': {
-                    'date': eventEndTime.strftime("%Y-%m-%d"),
+                    'date': eventEndTime.strftime('%Y-%m-%d'),
                     'timeZone': timezone,
                 }, 
                 'source': {
@@ -215,11 +201,11 @@ def makeCalEvent(eventName, eventDescription, eventStartTime, sourceURL, eventEn
             'summary': eventName,
             'description': eventDescription,
             'start': {
-                'date': eventStartTime.strftime("%Y-%m-%d"),
+                'date': eventStartTime.strftime('%Y-%m-%d'),
                 'timeZone': timezone,
             },
             'end': {
-                'date': eventEndTime.strftime("%Y-%m-%d"),
+                'date': eventEndTime.strftime('%Y-%m-%d'),
                 'timeZone': timezone,
             }, 
             'source': {
@@ -246,11 +232,11 @@ def makeCalEvent(eventName, eventDescription, eventStartTime, sourceURL, eventEn
             'summary': eventName,
             'description': eventDescription,
             'start': {
-                'dateTime': eventStartTime.strftime("%Y-%m-%dT%H:%M:%S"),
+                'dateTime': eventStartTime.strftime('%Y-%m-%dT%H:%M:%S'),
                 'timeZone': timezone,
             },
             'end': {
-                'dateTime': eventEndTime.strftime("%Y-%m-%dT%H:%M:%S"),
+                'dateTime': eventEndTime.strftime('%Y-%m-%dT%H:%M:%S'),
                 'timeZone': timezone,
             }, 
             'source': {
@@ -278,11 +264,11 @@ def upDateCalEvent(eventName, eventDescription, eventStartTime, sourceURL, event
                 'summary': eventName,
                 'description': eventDescription,
                 'start': {
-                    'dateTime': eventStartTime.strftime("%Y-%m-%dT%H:%M:%S"),
+                    'dateTime': eventStartTime.strftime('%Y-%m-%dT%H:%M:%S'),
                     'timeZone': timezone,
                 },
                 'end': {
-                    'dateTime': eventEndTime.strftime("%Y-%m-%dT%H:%M:%S"),
+                    'dateTime': eventEndTime.strftime('%Y-%m-%dT%H:%M:%S'),
                     'timeZone': timezone,
                 }, 
                 'source': {
@@ -296,11 +282,11 @@ def upDateCalEvent(eventName, eventDescription, eventStartTime, sourceURL, event
                 'summary': eventName,
                 'description': eventDescription,
                 'start': {
-                    'date': eventStartTime.strftime("%Y-%m-%d"),
+                    'date': eventStartTime.strftime('%Y-%m-%d'),
                     'timeZone': timezone,
                 },
                 'end': {
-                    'date': eventEndTime.strftime("%Y-%m-%d"),
+                    'date': eventEndTime.strftime('%Y-%m-%d'),
                     'timeZone': timezone,
                 }, 
                 'source': {
@@ -316,11 +302,11 @@ def upDateCalEvent(eventName, eventDescription, eventStartTime, sourceURL, event
             'summary': eventName,
             'description': eventDescription,
             'start': {
-                'date': eventStartTime.strftime("%Y-%m-%d"),
+                'date': eventStartTime.strftime('%Y-%m-%d'),
                 'timeZone': timezone,
             },
             'end': {
-                'date': eventEndTime.strftime("%Y-%m-%d"),
+                'date': eventEndTime.strftime('%Y-%m-%d'),
                 'timeZone': timezone,
             }, 
             'source': {
@@ -346,11 +332,11 @@ def upDateCalEvent(eventName, eventDescription, eventStartTime, sourceURL, event
             'summary': eventName,
             'description': eventDescription,
             'start': {
-                'dateTime': eventStartTime.strftime("%Y-%m-%dT%H:%M:%S"),
+                'dateTime': eventStartTime.strftime('%Y-%m-%dT%H:%M:%S'),
                 'timeZone': timezone,
             },
             'end': {
-                'dateTime': eventEndTime.strftime("%Y-%m-%dT%H:%M:%S"),
+                'dateTime': eventEndTime.strftime('%Y-%m-%dT%H:%M:%S'),
                 'timeZone': timezone,
             }, 
             'source': {
@@ -385,39 +371,39 @@ def upDateCalEvent(eventName, eventDescription, eventStartTime, sourceURL, event
 ## If you just want all Notion events to be on GCal, then you'll have to edit the query so it is only checking the 'On GCal?' property
 
 
-todayDate = datetime.today().strftime("%Y-%m-%d")
+todayDate = datetime.today().strftime('%Y-%m-%d')
 
 my_page = notion.databases.query(  #this query will return a dictionary that we will parse for information that we want
     **{
-        "database_id": DATABASE_ID, 
-        "filter": {
-            "and": [
+        'database_id': DATABASE_ID, 
+        'filter': {
+            'and': [
                 {
-                    "property": On_GCal_Notion_Name, 
-                    "checkbox":  {
-                        "equals": False
+                    'property': On_GCal_Notion_Name, 
+                    'checkbox':  {
+                        'equals': False
                     }
                 }, 
                 {
-                    "or": [
+                    'or': [
                     {
-                        "property": Date_Notion_Name, 
-                        "date": {
-                            "equals": todayDate
+                        'property': Date_Notion_Name, 
+                        'date': {
+                            'equals': todayDate
                         }
                     }, 
                     {
-                        "property": Date_Notion_Name, 
-                        "date": {
-                            "next_week": {}
+                        'property': Date_Notion_Name, 
+                        'date': {
+                            'next_week': {}
                         }
                     }
                 ]   
                 },
                 {
-                    "property": Delete_Notion_Name, 
-                    "checkbox":  {
-                        "equals": False
+                    'property': Delete_Notion_Name, 
+                    'checkbox':  {
+                        'equals': False
                     }
                 }
             ]
@@ -460,13 +446,13 @@ if len(resultList) > 0:
         try:
             Initiatives.append(el['properties'][Initiative_Notion_Name]['select']['name'])
         except:
-            Initiatives.append("")
+            Initiatives.append('')
         
         try: 
             ExtraInfo.append(el['properties'][ExtraInfo_Notion_Name]['rich_text'][0]['text']['content'])
         except:
-            ExtraInfo.append("")
-        URL_list.append(makeTaskURL(el['id'], urlRoot))
+            ExtraInfo.append('')
+        URL_list.append(makeTaskURL(el['id'], ROOT_URL))
         
         try:
             CalendarList.append(calendarDictionary[el['properties'][Calendar_Notion_Name]['select']['name']])
@@ -476,13 +462,13 @@ if len(resultList) > 0:
         pageId = el['id']
         my_page = notion.pages.update( ##### This checks off that the event has been put on Google Calendar
             **{
-                "page_id": pageId, 
-                "properties": {
+                'page_id': pageId, 
+                'properties': {
                     On_GCal_Notion_Name: {
-                        "checkbox": True 
+                        'checkbox': True 
                     },
                     LastUpdatedTime_Notion_Name: {
-                        "date":{
+                        'date':{
                             'start': notion_time(),
                             'end': None,
                         }
@@ -500,9 +486,9 @@ if len(resultList) > 0:
         except:
             try:
                 #start and end are both date+time
-                calEventId = makeCalEvent(TaskNames[i], makeEventDescription(Initiatives[i], ExtraInfo[i]), datetime.strptime(start_Dates[i][:-6], "%Y-%m-%dT%H:%M:%S.000"), URL_list[i],  datetime.strptime(end_Times[i][:-6], "%Y-%m-%dT%H:%M:%S.000"), CalendarList[i])
+                calEventId = makeCalEvent(TaskNames[i], makeEventDescription(Initiatives[i], ExtraInfo[i]), datetime.strptime(start_Dates[i][:-6], '%Y-%m-%dT%H:%M:%S.000'), URL_list[i],  datetime.strptime(end_Times[i][:-6], '%Y-%m-%dT%H:%M:%S.000'), CalendarList[i])
             except:
-                calEventId = makeCalEvent(TaskNames[i], makeEventDescription(Initiatives[i], ExtraInfo[i]), datetime.strptime(start_Dates[i][:-6], "%Y-%m-%dT%H:%M:%S.%f"), URL_list[i],  datetime.strptime(end_Times[i][:-6], "%Y-%m-%dT%H:%M:%S.%f"), CalendarList[i])
+                calEventId = makeCalEvent(TaskNames[i], makeEventDescription(Initiatives[i], ExtraInfo[i]), datetime.strptime(start_Dates[i][:-6], '%Y-%m-%dT%H:%M:%S.%f'), URL_list[i],  datetime.strptime(end_Times[i][:-6], '%Y-%m-%dT%H:%M:%S.%f'), CalendarList[i])
 
 
         
@@ -511,17 +497,17 @@ if len(resultList) > 0:
         if CalendarList[i] == calendarDictionary[DEFAULT_CALENDAR_NAME]: #this means that there is no calendar assigned on Notion
             my_page = notion.pages.update( ##### This puts the the GCal Id into the Notion Dashboard
                 **{
-                    "page_id": pageId, 
-                    "properties": {
+                    'page_id': pageId, 
+                    'properties': {
                         GCalEventId_Notion_Name: {
-                            "rich_text": [{
+                            'rich_text': [{
                                 'text': {
                                     'content': calEventIdList[i]
                                 }
                             }]
                         },
                         Current_Calendar_Id_Notion_Name: {
-                            "rich_text": [{
+                            'rich_text': [{
                                 'text': {
                                     'content': CalendarList[i]
                                 }
@@ -529,7 +515,7 @@ if len(resultList) > 0:
                         },
                         Calendar_Notion_Name:  { 
                             'select': {
-                                "name": DEFAULT_CALENDAR_NAME
+                                'name': DEFAULT_CALENDAR_NAME
                             },
                         },
                     },
@@ -538,17 +524,17 @@ if len(resultList) > 0:
         else: #just a regular update
             my_page = notion.pages.update(
                 **{
-                    "page_id": pageId, 
-                    "properties": {
+                    'page_id': pageId, 
+                    'properties': {
                         GCalEventId_Notion_Name: {
-                            "rich_text": [{
+                            'rich_text': [{
                                 'text': {
                                     'content': calEventIdList[i]
                                 }
                             }]
                         },
                         Current_Calendar_Id_Notion_Name: {
-                            "rich_text": [{
+                            'rich_text': [{
                                 'text': {
                                     'content': CalendarList[i]
                                 }
@@ -561,7 +547,7 @@ if len(resultList) > 0:
 
 
 else:
-    print("Nothing new added to GCal")
+    print('Nothing new added to GCal')
 
 
 
@@ -574,35 +560,35 @@ else:
 #this queries items in the next week where the Calendar select thing is empty
 my_page = notion.databases.query(  
     **{
-        "database_id": DATABASE_ID, 
-        "filter": {
-            "and": [
+        'database_id': DATABASE_ID, 
+        'filter': {
+            'and': [
                 {
-                    "property": Calendar_Notion_Name, 
-                    "select":  {
-                        "is_empty": True
+                    'property': Calendar_Notion_Name, 
+                    'select':  {
+                        'is_empty': True
                     }
                 }, 
                 {
-                    "or": [
+                    'or': [
                     {
-                        "property": Date_Notion_Name, 
-                        "date": {
-                            "equals": todayDate
+                        'property': Date_Notion_Name, 
+                        'date': {
+                            'equals': todayDate
                         }
                     }, 
                     {
-                        "property": Date_Notion_Name, 
-                        "date": {
-                            "next_week": {}
+                        'property': Date_Notion_Name, 
+                        'date': {
+                            'next_week': {}
                         }
                     }
                 ]   
                 },
                 {
-                    "property": Delete_Notion_Name, 
-                    "checkbox":  {
-                        "equals": False
+                    'property': Delete_Notion_Name, 
+                    'checkbox':  {
+                        'equals': False
                     }
                 }
             ]
@@ -616,15 +602,15 @@ if len(resultList) > 0:
         pageId = el['id']
         my_page = notion.pages.update( ##### This checks off that the event has been put on Google Calendar
             **{
-                "page_id": pageId, 
-                "properties": {
+                'page_id': pageId, 
+                'properties': {
                     Calendar_Notion_Name:  { 
                         'select': {
-                            "name": DEFAULT_CALENDAR_NAME
+                            'name': DEFAULT_CALENDAR_NAME
                         },
                     },
                     LastUpdatedTime_Notion_Name: {
-                        "date":{
+                        'date':{
                             'start': notion_time(),
                             'end': None,
                         }
@@ -640,41 +626,41 @@ if len(resultList) > 0:
 #look for events that are today or in the next week
 my_page = notion.databases.query(  
     **{
-        "database_id": DATABASE_ID, 
-        "filter": {
-            "and": [
+        'database_id': DATABASE_ID, 
+        'filter': {
+            'and': [
                 {
-                    "property": NeedGCalUpdate_Notion_Name, 
-                    "checkbox":  {
-                        "equals": True
+                    'property': NeedGCalUpdate_Notion_Name, 
+                    'checkbox':  {
+                        'equals': True
                     }
                 }, 
                 {
-                    "property": On_GCal_Notion_Name, 
-                    "checkbox":  {
-                        "equals": True
+                    'property': On_GCal_Notion_Name, 
+                    'checkbox':  {
+                        'equals': True
                     }
                 }, 
                 {
-                    "or": [
+                    'or': [
                     {
-                        "property": Date_Notion_Name, 
-                        "date": {
-                            "equals": todayDate
+                        'property': Date_Notion_Name, 
+                        'date': {
+                            'equals': todayDate
                         }
                     }, 
                     {
-                        "property": Date_Notion_Name, 
-                        "date": {
-                            "next_week": {}
+                        'property': Date_Notion_Name, 
+                        'date': {
+                            'next_week': {}
                         }
                     }
                 ]   
                 },
                 {
-                    "property": Delete_Notion_Name, 
-                    "checkbox":  {
-                        "equals": False
+                    'property': Delete_Notion_Name, 
+                    'checkbox':  {
+                        'equals': False
                     }
                 }
             ]
@@ -730,13 +716,13 @@ if len(resultList) > 0:
         try:
             Initiatives.append(el['properties'][Initiative_Notion_Name]['select']['name'])
         except:
-            Initiatives.append("")
+            Initiatives.append('')
         
         try: 
             ExtraInfo.append(el['properties'][ExtraInfo_Notion_Name]['rich_text'][0]['text']['content'])
         except:
-            ExtraInfo.append("")
-        URL_list.append(makeTaskURL(el['id'], urlRoot))
+            ExtraInfo.append('')
+        URL_list.append(makeTaskURL(el['id'], ROOT_URL))
 
         print(el)
         # CalendarList.append(calendarDictionary[el['properties'][Calendar_Notion_Name]['select']['name']])
@@ -755,24 +741,24 @@ if len(resultList) > 0:
             calEventId = upDateCalEvent(TaskNames[i], makeEventDescription(Initiatives[i], ExtraInfo[i]), datetime.strptime(start_Dates[i], '%Y-%m-%d'), URL_list[i], updatingCalEventIds[i], datetime.strptime(end_Times[i], '%Y-%m-%d'), CurrentCalList[i], CalendarList[i])
         except:
             try:
-                calEventId = upDateCalEvent(TaskNames[i], makeEventDescription(Initiatives[i], ExtraInfo[i]), datetime.strptime(start_Dates[i][:-6], "%Y-%m-%dT%H:%M:%S.000"), URL_list[i], updatingCalEventIds[i],  datetime.strptime(end_Times[i][:-6], "%Y-%m-%dT%H:%M:%S.000"), CurrentCalList[i], CalendarList[i])
+                calEventId = upDateCalEvent(TaskNames[i], makeEventDescription(Initiatives[i], ExtraInfo[i]), datetime.strptime(start_Dates[i][:-6], '%Y-%m-%dT%H:%M:%S.000'), URL_list[i], updatingCalEventIds[i],  datetime.strptime(end_Times[i][:-6], '%Y-%m-%dT%H:%M:%S.000'), CurrentCalList[i], CalendarList[i])
             except:
-                calEventId = upDateCalEvent(TaskNames[i], makeEventDescription(Initiatives[i], ExtraInfo[i]), datetime.strptime(start_Dates[i][:-6], "%Y-%m-%dT%H:%M:%S.%f"), URL_list[i], updatingCalEventIds[i],  datetime.strptime(end_Times[i][:-6], "%Y-%m-%dT%H:%M:%S.%f"), CurrentCalList[i], CalendarList[i])
+                calEventId = upDateCalEvent(TaskNames[i], makeEventDescription(Initiatives[i], ExtraInfo[i]), datetime.strptime(start_Dates[i][:-6], '%Y-%m-%dT%H:%M:%S.%f'), URL_list[i], updatingCalEventIds[i],  datetime.strptime(end_Times[i][:-6], '%Y-%m-%dT%H:%M:%S.%f'), CurrentCalList[i], CalendarList[i])
         
         
 
         my_page = notion.pages.update( ##### This updates the last time that the page in Notion was updated by the code
             **{
-                "page_id": pageId, 
-                "properties": {
+                'page_id': pageId, 
+                'properties': {
                     LastUpdatedTime_Notion_Name: {
-                        "date":{
+                        'date':{
                             'start': notion_time(), #has to be adjusted for when daylight savings is different
                             'end': None,
                         }
                     },
                     Current_Calendar_Id_Notion_Name: {
-                        "rich_text": [{
+                        'rich_text': [{
                             'text': {
                                 'content': CalendarList[i]
                             }
@@ -785,11 +771,11 @@ if len(resultList) > 0:
 
 
 else:
-    print("Nothing new updated to GCal")
+    print('Nothing new updated to GCal')
 
 
 
-todayDate = datetime.today().strftime("%Y-%m-%d")
+todayDate = datetime.today().strftime('%Y-%m-%d')
 
 ###########################################################################
 ##### Part 3: Sync GCal event updates for events already in Notion back to Notion!
@@ -798,43 +784,43 @@ todayDate = datetime.today().strftime("%Y-%m-%d")
 ##Query notion tasks already in Gcal, don't have to be updated, and are today or in the next week
 my_page = notion.databases.query( 
     **{
-        "database_id": DATABASE_ID,
-        "filter": {
-            "and": [
+        'database_id': DATABASE_ID,
+        'filter': {
+            'and': [
                 {
-                    "property": NeedGCalUpdate_Notion_Name, 
-                    "formula":{
-                        "checkbox":  {
-                            "equals": False
+                    'property': NeedGCalUpdate_Notion_Name, 
+                    'formula':{
+                        'checkbox':  {
+                            'equals': False
                         }
                     }
                 }, 
                 {
-                    "property": On_GCal_Notion_Name, 
-                    "checkbox":  {
-                        "equals": True
+                    'property': On_GCal_Notion_Name, 
+                    'checkbox':  {
+                        'equals': True
                     }
                 },
                 {
-                    "or": [
+                    'or': [
                     {
-                        "property": Date_Notion_Name, 
-                        "date": {
-                            "equals": todayDate
+                        'property': Date_Notion_Name, 
+                        'date': {
+                            'equals': todayDate
                         }
                     }, 
                     {
-                        "property": Date_Notion_Name, 
-                        "date": {
-                            "next_week": {}
+                        'property': Date_Notion_Name, 
+                        'date': {
+                            'next_week': {}
                         }
                     }
                 ]   
                 },
                 {
-                    "property": Delete_Notion_Name, 
-                    "checkbox":  {
-                        "equals": False
+                    'property': Delete_Notion_Name, 
+                    'checkbox':  {
+                        'equals': False
                     }
                 }
             ]
@@ -877,22 +863,22 @@ for result in resultList:
 #the reason we take off the last 6 characters is so we can focus in on just the date and time instead of any extra info
 for  i in range(len(notion_start_datetimes)):    
     try:
-        notion_start_datetimes[i] = datetime.strptime(notion_start_datetimes[i], "%Y-%m-%d")
+        notion_start_datetimes[i] = datetime.strptime(notion_start_datetimes[i], '%Y-%m-%d')
     except:
         try:
-            notion_start_datetimes[i] = datetime.strptime(notion_start_datetimes[i][:-6], "%Y-%m-%dT%H:%M:%S.000")
+            notion_start_datetimes[i] = datetime.strptime(notion_start_datetimes[i][:-6], '%Y-%m-%dT%H:%M:%S.000')
         except:
-            notion_start_datetimes[i] = datetime.strptime(notion_start_datetimes[i][:-6], "%Y-%m-%dT%H:%M:%S.%f")
+            notion_start_datetimes[i] = datetime.strptime(notion_start_datetimes[i][:-6], '%Y-%m-%dT%H:%M:%S.%f')
 
 for  i in range(len(notion_end_datetimes)):    
     if notion_end_datetimes[i] != None:
         try:
-            notion_end_datetimes[i] = datetime.strptime(notion_end_datetimes[i], "%Y-%m-%d")
+            notion_end_datetimes[i] = datetime.strptime(notion_end_datetimes[i], '%Y-%m-%d')
         except:
             try:
-                notion_end_datetimes[i] = datetime.strptime(notion_end_datetimes[i][:-6], "%Y-%m-%dT%H:%M:%S.000")
+                notion_end_datetimes[i] = datetime.strptime(notion_end_datetimes[i][:-6], '%Y-%m-%dT%H:%M:%S.000')
             except:
-                notion_end_datetimes[i] = datetime.strptime(notion_end_datetimes[i][:-6], "%Y-%m-%dT%H:%M:%S.%f")
+                notion_end_datetimes[i] = datetime.strptime(notion_end_datetimes[i][:-6], '%Y-%m-%dT%H:%M:%S.%f')
     else:
         notion_end_datetimes[i] = notion_start_datetimes[i] #the reason we're doing this weird ass thing is because when we put the end time into the update or make GCal event, it'll be representative of the date
 
@@ -918,18 +904,18 @@ for gCalId in notion_gCal_IDs:
     print(value)
     print('\n') 
     try:
-        gCal_start_datetimes.append(datetime.strptime(value['start']['dateTime'][:-6], "%Y-%m-%dT%H:%M:%S"))
+        gCal_start_datetimes.append(datetime.strptime(value['start']['dateTime'][:-6], '%Y-%m-%dT%H:%M:%S'))
     except:
-        date = datetime.strptime(value['start']['date'], "%Y-%m-%d")
+        date = datetime.strptime(value['start']['date'], '%Y-%m-%d')
         x = datetime(date.year, date.month, date.day, 0, 0, 0)
-        # gCal_start_datetimes.append(datetime.strptime(x, "%Y-%m-%dT%H:%M:%S"))
+        # gCal_start_datetimes.append(datetime.strptime(x, '%Y-%m-%dT%H:%M:%S'))
         gCal_start_datetimes.append(x)
     try:
-        gCal_end_datetimes.append(datetime.strptime(value['end']['dateTime'][:-6], "%Y-%m-%dT%H:%M:%S"))
+        gCal_end_datetimes.append(datetime.strptime(value['end']['dateTime'][:-6], '%Y-%m-%dT%H:%M:%S'))
     except:
-        date = datetime.strptime(value['end']['date'], "%Y-%m-%d")
+        date = datetime.strptime(value['end']['date'], '%Y-%m-%d')
         x = datetime(date.year, date.month, date.day, 0, 0, 0) - timedelta(days=1)
-        # gCal_end_datetimes.append(datetime.strptime(value['end']['date'][:-6], "%Y-%m-%dT%H:%M:%S"))
+        # gCal_end_datetimes.append(datetime.strptime(value['end']['date'][:-6], '%Y-%m-%dT%H:%M:%S'))
         gCal_end_datetimes.append(x)
 
 #Now we iterate and compare the time on the Notion Dashboard and the start time of the GCal event
@@ -962,16 +948,16 @@ for i in range(len(new_notion_start_datetimes)):
         if start.hour == 0 and start.minute == 0 and start == end: #you're given 12 am dateTimes so you want to enter them as dates (not datetimes) into Notion
             my_page = notion.pages.update( #update the notion dashboard with the new datetime and update the last updated time
                 **{
-                    "page_id": notion_IDs_List[i], 
-                    "properties": {
+                    'page_id': notion_IDs_List[i], 
+                    'properties': {
                         Date_Notion_Name: {
-                            "date":{
-                                'start': start.strftime("%Y-%m-%d"),
+                            'date':{
+                                'start': start.strftime('%Y-%m-%d'),
                                 'end': None,
                             }
                         },
                         LastUpdatedTime_Notion_Name: {
-                            "date":{
+                            'date':{
                                 'start': notion_time(), #has to be adjsuted for when daylight savings is different
                                 'end': None,
                             }
@@ -982,16 +968,16 @@ for i in range(len(new_notion_start_datetimes)):
         elif start.hour == 0 and start.minute == 0 and end.hour == 0 and end.minute == 0: #you're given 12 am dateTimes so you want to enter them as dates (not datetimes) into Notion
             my_page = notion.pages.update( #update the notion dashboard with the new datetime and update the last updated time
                 **{
-                    "page_id": notion_IDs_List[i], 
-                    "properties": {
+                    'page_id': notion_IDs_List[i], 
+                    'properties': {
                         Date_Notion_Name: {
-                            "date":{
-                                'start': start.strftime("%Y-%m-%d"),
-                                'end': end.strftime("%Y-%m-%d"),
+                            'date':{
+                                'start': start.strftime('%Y-%m-%d'),
+                                'end': end.strftime('%Y-%m-%d'),
                             }
                         },
                         LastUpdatedTime_Notion_Name: {
-                            "date":{
+                            'date':{
                                 'start': notion_time(), #has to be adjsuted for when daylight savings is different
                                 'end': None,
                             }
@@ -1002,16 +988,16 @@ for i in range(len(new_notion_start_datetimes)):
         else: #update Notin using datetime format 
             my_page = notion.pages.update( #update the notion dashboard with the new datetime and update the last updated time
                 **{
-                    "page_id": notion_IDs_List[i], 
-                    "properties": {
+                    'page_id': notion_IDs_List[i], 
+                    'properties': {
                         Date_Notion_Name: {
-                            "date":{
+                            'date':{
                                 'start': DateTimeIntoNotionFormat(start),
                                 'end': DateTimeIntoNotionFormat(end),
                             }
                         },
                         LastUpdatedTime_Notion_Name: {
-                            "date":{
+                            'date':{
                                 'start': notion_time(), #has to be adjsuted for when daylight savings is different
                                 'end': None,
                             }
@@ -1026,16 +1012,16 @@ for i in range(len(new_notion_start_datetimes)):
         if start.hour == 0 and start.minute == 0 and start == end: #you're given 12 am dateTimes so you want to enter them as dates (not datetimes) into Notion
             my_page = notion.pages.update( #update the notion dashboard with the new datetime and update the last updated time
                 **{
-                    "page_id": notion_IDs_List[i], 
-                    "properties": {
+                    'page_id': notion_IDs_List[i], 
+                    'properties': {
                         Date_Notion_Name: {
-                            "date":{
-                                'start': start.strftime("%Y-%m-%d"),
+                            'date':{
+                                'start': start.strftime('%Y-%m-%d'),
                                 'end': None,
                             }
                         },
                         LastUpdatedTime_Notion_Name: {
-                            "date":{
+                            'date':{
                                 'start': notion_time(), #has to be adjsuted for when daylight savings is different
                                 'end': None,
                             }
@@ -1046,16 +1032,16 @@ for i in range(len(new_notion_start_datetimes)):
         elif start.hour == 0 and start.minute == 0 and end.hour == 0 and end.minute == 0: #you're given 12 am dateTimes so you want to enter them as dates (not datetimes) into Notion
             my_page = notion.pages.update( #update the notion dashboard with the new datetime and update the last updated time
                 **{
-                    "page_id": notion_IDs_List[i], 
-                    "properties": {
+                    'page_id': notion_IDs_List[i], 
+                    'properties': {
                         Date_Notion_Name: {
-                            "date":{
-                                'start': start.strftime("%Y-%m-%d"),
-                                'end': end.strftime("%Y-%m-%d"),
+                            'date':{
+                                'start': start.strftime('%Y-%m-%d'),
+                                'end': end.strftime('%Y-%m-%d'),
                             }
                         },
                         LastUpdatedTime_Notion_Name: {
-                            "date":{
+                            'date':{
                                 'start': notion_time(), #has to be adjsuted for when daylight savings is different
                                 'end': None,
                             }
@@ -1066,16 +1052,16 @@ for i in range(len(new_notion_start_datetimes)):
         else: #update Notin using datetime format 
             my_page = notion.pages.update( #update the notion dashboard with the new datetime and update the last updated time
                 **{
-                    "page_id": notion_IDs_List[i], 
-                    "properties": {
+                    'page_id': notion_IDs_List[i], 
+                    'properties': {
                         Date_Notion_Name: {
-                            "date":{
+                            'date':{
                                 'start': DateTimeIntoNotionFormat(start),
                                 'end': DateTimeIntoNotionFormat(end),
                             }
                         },
                         LastUpdatedTime_Notion_Name: {
-                            "date":{
+                            'date':{
                                 'start': notion_time(), #has to be adjsuted for when daylight savings is different
                                 'end': None,
                             }
@@ -1090,16 +1076,16 @@ for i in range(len(new_notion_start_datetimes)):
         if start.hour == 0 and start.minute == 0 and start == end: #you're given 12 am dateTimes so you want to enter them as dates (not datetimes) into Notion
             my_page = notion.pages.update( #update the notion dashboard with the new datetime and update the last updated time
                 **{
-                    "page_id": notion_IDs_List[i], 
-                    "properties": {
+                    'page_id': notion_IDs_List[i], 
+                    'properties': {
                         Date_Notion_Name: {
-                            "date":{
-                                'start': start.strftime("%Y-%m-%d"),
+                            'date':{
+                                'start': start.strftime('%Y-%m-%d'),
                                 'end': None,
                             }
                         },
                         LastUpdatedTime_Notion_Name: {
-                            "date":{
+                            'date':{
                                 'start': notion_time(), #has to be adjsuted for when daylight savings is different
                                 'end': None,
                             }
@@ -1110,16 +1096,16 @@ for i in range(len(new_notion_start_datetimes)):
         elif start.hour == 0 and start.minute == 0 and end.hour == 0 and end.minute == 0: #you're given 12 am dateTimes so you want to enter them as dates (not datetimes) into Notion
             my_page = notion.pages.update( #update the notion dashboard with the new datetime and update the last updated time
                 **{
-                    "page_id": notion_IDs_List[i], 
-                    "properties": {
+                    'page_id': notion_IDs_List[i], 
+                    'properties': {
                         Date_Notion_Name: {
-                            "date":{
-                                'start': start.strftime("%Y-%m-%d"),
-                                'end': end.strftime("%Y-%m-%d"),
+                            'date':{
+                                'start': start.strftime('%Y-%m-%d'),
+                                'end': end.strftime('%Y-%m-%d'),
                             }
                         },
                         LastUpdatedTime_Notion_Name: {
-                            "date":{
+                            'date':{
                                 'start': notion_time(), #has to be adjsuted for when daylight savings is different
                                 'end': None,
                             }
@@ -1130,16 +1116,16 @@ for i in range(len(new_notion_start_datetimes)):
         else: #update Notin using datetime format 
             my_page = notion.pages.update( #update the notion dashboard with the new datetime and update the last updated time
                 **{
-                    "page_id": notion_IDs_List[i], 
-                    "properties": {
+                    'page_id': notion_IDs_List[i], 
+                    'properties': {
                         Date_Notion_Name: {
-                            "date":{
+                            'date':{
                                 'start': DateTimeIntoNotionFormat(start),
                                 'end': DateTimeIntoNotionFormat(end),
                             }
                         },
                         LastUpdatedTime_Notion_Name: {
-                            "date":{
+                            'date':{
                                 'start': notion_time(), #has to be adjsuted for when daylight savings is different
                                 'end': None,
                             }
@@ -1161,10 +1147,10 @@ for i, gCalId in enumerate(gCal_CalIds): #instead of checking, just update the n
     print('GcalId: ' + gCalId)
     my_page = notion.pages.update( ##### This puts the the GCal Id into the Notion Dashboard
         **{
-            "page_id": notion_IDs_List[i], 
-            "properties": {
+            'page_id': notion_IDs_List[i], 
+            'properties': {
                 Current_Calendar_Id_Notion_Name: { #this is the text
-                    "rich_text": [{
+                    'rich_text': [{
                         'text': {
                             'content': CalIds[CalNames.index(gCalId)]
                         }
@@ -1172,11 +1158,11 @@ for i, gCalId in enumerate(gCal_CalIds): #instead of checking, just update the n
                 },
                 Calendar_Notion_Name:  { #this is the select
                     'select': {
-                        "name": gCalId 
+                        'name': gCalId 
                     },
                 },
                 LastUpdatedTime_Notion_Name: {
-                    "date":{
+                    'date':{
                         'start': notion_time(), #has to be adjsuted for when daylight savings is different
                         'end': None,
                     }
@@ -1195,19 +1181,19 @@ for i, gCalId in enumerate(gCal_CalIds): #instead of checking, just update the n
 
 my_page = notion.databases.query( 
     **{
-        "database_id": DATABASE_ID,
-        "filter": {
-                "and": [
+        'database_id': DATABASE_ID,
+        'filter': {
+                'and': [
                 {
-                    "property": GCalEventId_Notion_Name, 
-                    "text":  {
-                        "is_not_empty": True
+                    'property': GCalEventId_Notion_Name, 
+                    'text':  {
+                        'is_not_empty': True
                     }
                 },
                 {
-                    "property": Delete_Notion_Name, 
-                    "checkbox":  {
-                        "equals": False
+                    'property': Delete_Notion_Name, 
+                    'checkbox':  {
+                        'equals': False
                     }
                 }
             ]
@@ -1217,11 +1203,11 @@ my_page = notion.databases.query(
 
 my_page = notion.databases.query( 
     **{
-        "database_id": DATABASE_ID,
-        "filter": {
-            "property": GCalEventId_Notion_Name, 
-            "text":  {
-                "is_not_empty": True
+        'database_id': DATABASE_ID,
+        'filter': {
+            'property': GCalEventId_Notion_Name, 
+            'text':  {
+                'is_not_empty': True
             }
         },
     }
@@ -1266,18 +1252,18 @@ calStartDates = []
 calEndDates = []
 for el in calItems:
     try:
-        calStartDates.append(datetime.strptime(el['start']['dateTime'][:-6], "%Y-%m-%dT%H:%M:%S"))
+        calStartDates.append(datetime.strptime(el['start']['dateTime'][:-6], '%Y-%m-%dT%H:%M:%S'))
     except:
-        date = datetime.strptime(el['start']['date'], "%Y-%m-%d")
+        date = datetime.strptime(el['start']['date'], '%Y-%m-%d')
         x = datetime(date.year, date.month, date.day, 0, 0, 0)
-        # gCal_start_datetimes.append(datetime.strptime(x, "%Y-%m-%dT%H:%M:%S"))
+        # gCal_start_datetimes.append(datetime.strptime(x, '%Y-%m-%dT%H:%M:%S'))
         calStartDates.append(x)
     try:
-        calEndDates.append(datetime.strptime(el['end']['dateTime'][:-6], "%Y-%m-%dT%H:%M:%S"))
+        calEndDates.append(datetime.strptime(el['end']['dateTime'][:-6], '%Y-%m-%dT%H:%M:%S'))
     except:
-        date = datetime.strptime(el['end']['date'], "%Y-%m-%d")
+        date = datetime.strptime(el['end']['date'], '%Y-%m-%d')
         x = datetime(date.year, date.month, date.day, 0, 0, 0) 
-        # gCal_end_datetimes.append(datetime.strptime(value['end']['date'][:-6], "%Y-%m-%dT%H:%M:%S"))
+        # gCal_end_datetimes.append(datetime.strptime(value['end']['date'][:-6], '%Y-%m-%dT%H:%M:%S'))
         calEndDates.append(x)
 
 
@@ -1302,57 +1288,57 @@ for i in range(len(calIds)):
             end = calEndDates[i] - timedelta(days=1)
             my_page = notion.pages.create(
                 **{
-                    "parent": {
-                        "database_id": DATABASE_ID,
+                    'parent': {
+                        'database_id': DATABASE_ID,
                     },
-                    "properties": {
+                    'properties': {
                         Task_Notion_Name: {
-                            "type": 'title',
-                            "title": [
+                            'type': 'title',
+                            'title': [
                             {
-                                "type": 'text',
-                                "text": {
-                                "content": calName[i],
+                                'type': 'text',
+                                'text': {
+                                'content': calName[i],
                                 },
                             },
                             ],
                         },
                         Date_Notion_Name: {
-                            "type": 'date',
+                            'type': 'date',
                             'date': {
-                                'start': calStartDates[i].strftime("%Y-%m-%d"),
+                                'start': calStartDates[i].strftime('%Y-%m-%d'),
                                 'end': None, 
                             }
                         },
                         LastUpdatedTime_Notion_Name: {
-                            "type": 'date',
+                            'type': 'date',
                             'date': {
                                 'start': notion_time(),
                                 'end': None,
                             }
                         },
                         ExtraInfo_Notion_Name:  {
-                            "type": 'rich_text', 
-                            "rich_text": [{
+                            'type': 'rich_text', 
+                            'rich_text': [{
                                 'text': {
                                     'content': calDescriptions[i]
                                 }
                             }]
                         },
                         GCalEventId_Notion_Name: {
-                            "type": "rich_text", 
-                            "rich_text": [{
+                            'type': 'rich_text', 
+                            'rich_text': [{
                                 'text': {
                                     'content': calIds[i]
                                 }
                             }]
                         }, 
                         On_GCal_Notion_Name: {
-                            "type": "checkbox", 
-                            "checkbox": True
+                            'type': 'checkbox', 
+                            'checkbox': True
                         },
                         Current_Calendar_Id_Notion_Name: {
-                            "rich_text": [{
+                            'rich_text': [{
                                 'text': {
                                     'content': gCal_calendarId[i]
                                 }
@@ -1360,7 +1346,7 @@ for i in range(len(calIds)):
                         },
                         Calendar_Notion_Name:  { 
                             'select': {
-                                "name": gCal_calendarName[i]
+                                'name': gCal_calendarName[i]
                             },
                         }
                     },
@@ -1373,57 +1359,57 @@ for i in range(len(calIds)):
 
             my_page = notion.pages.create(
                 **{
-                    "parent": {
-                        "database_id": DATABASE_ID,
+                    'parent': {
+                        'database_id': DATABASE_ID,
                     },
-                    "properties": {
+                    'properties': {
                         Task_Notion_Name: {
-                            "type": 'title',
-                            "title": [
+                            'type': 'title',
+                            'title': [
                             {
-                                "type": 'text',
-                                "text": {
-                                "content": calName[i],
+                                'type': 'text',
+                                'text': {
+                                'content': calName[i],
                                 },
                             },
                             ],
                         },
                         Date_Notion_Name: {
-                            "type": 'date',
+                            'type': 'date',
                             'date': {
-                                'start': calStartDates[i].strftime("%Y-%m-%d"),
-                                'end': end.strftime("%Y-%m-%d"), 
+                                'start': calStartDates[i].strftime('%Y-%m-%d'),
+                                'end': end.strftime('%Y-%m-%d'), 
                             }
                         },
                         LastUpdatedTime_Notion_Name: {
-                            "type": 'date',
+                            'type': 'date',
                             'date': {
                                 'start': notion_time(),
                                 'end': None,
                             }
                         },
                         ExtraInfo_Notion_Name:  {
-                            "type": 'rich_text', 
-                            "rich_text": [{
+                            'type': 'rich_text', 
+                            'rich_text': [{
                                 'text': {
                                     'content': calDescriptions[i]
                                 }
                             }]
                         },
                         GCalEventId_Notion_Name: {
-                            "type": "rich_text", 
-                            "rich_text": [{
+                            'type': 'rich_text', 
+                            'rich_text': [{
                                 'text': {
                                     'content': calIds[i]
                                 }
                             }]
                         }, 
                         On_GCal_Notion_Name: {
-                            "type": "checkbox", 
-                            "checkbox": True
+                            'type': 'checkbox', 
+                            'checkbox': True
                         },
                         Current_Calendar_Id_Notion_Name: {
-                            "rich_text": [{
+                            'rich_text': [{
                                 'text': {
                                     'content': gCal_calendarId[i]
                                 }
@@ -1431,7 +1417,7 @@ for i in range(len(calIds)):
                         },
                         Calendar_Notion_Name:  { 
                             'select': {
-                                "name": gCal_calendarName[i]
+                                'name': gCal_calendarName[i]
                             },
                         }
                     },
@@ -1442,57 +1428,57 @@ for i in range(len(calIds)):
             #Here, we create a new page for every new GCal event
             my_page = notion.pages.create(
                 **{
-                    "parent": {
-                        "database_id": DATABASE_ID,
+                    'parent': {
+                        'database_id': DATABASE_ID,
                     },
-                    "properties": {
+                    'properties': {
                         Task_Notion_Name: {
-                            "type": 'title',
-                            "title": [
+                            'type': 'title',
+                            'title': [
                             {
-                                "type": 'text',
-                                "text": {
-                                "content": calName[i],
+                                'type': 'text',
+                                'text': {
+                                'content': calName[i],
                                 },
                             },
                             ],
                         },
                         Date_Notion_Name: {
-                            "type": 'date',
+                            'type': 'date',
                             'date': {
                                 'start': DateTimeIntoNotionFormat(calStartDates[i]),
                                 'end': DateTimeIntoNotionFormat(calEndDates[i]), 
                             }
                         },
                         LastUpdatedTime_Notion_Name: {
-                            "type": 'date',
+                            'type': 'date',
                             'date': {
                                 'start': notion_time(),
                                 'end': None,
                             }
                         },
                         ExtraInfo_Notion_Name:  {
-                            "type": 'rich_text', 
-                            "rich_text": [{
+                            'type': 'rich_text', 
+                            'rich_text': [{
                                 'text': {
                                     'content': calDescriptions[i]
                                 }
                             }]
                         },
                         GCalEventId_Notion_Name: {
-                            "type": "rich_text", 
-                            "rich_text": [{
+                            'type': 'rich_text', 
+                            'rich_text': [{
                                 'text': {
                                     'content': calIds[i]
                                 }
                             }]
                         }, 
                         On_GCal_Notion_Name: {
-                            "type": "checkbox", 
-                            "checkbox": True
+                            'type': 'checkbox', 
+                            'checkbox': True
                         },
                         Current_Calendar_Id_Notion_Name: {
-                            "rich_text": [{
+                            'rich_text': [{
                                 'text': {
                                     'content': gCal_calendarId[i]
                                 }
@@ -1500,7 +1486,7 @@ for i in range(len(calIds)):
                         },
                         Calendar_Notion_Name:  { 
                             'select': {
-                                "name": gCal_calendarName[i]
+                                'name': gCal_calendarName[i]
                             },
                         }
                     },
@@ -1519,25 +1505,25 @@ for i in range(len(calIds)):
 
 my_page = notion.databases.query( 
     **{
-        "database_id": DATABASE_ID,
-        "filter": {
-            "and":[
+        'database_id': DATABASE_ID,
+        'filter': {
+            'and':[
                 {
-                    "property": GCalEventId_Notion_Name, 
-                    "text":  {
-                        "is_not_empty": True
+                    'property': GCalEventId_Notion_Name, 
+                    'text':  {
+                        'is_not_empty': True
                     }
                 }, 
                 {
-                    "property": On_GCal_Notion_Name, 
-                    "checkbox":  {
-                        "equals": True
+                    'property': On_GCal_Notion_Name, 
+                    'checkbox':  {
+                        'equals': True
                     }
                 },
                 {
-                    "property": Delete_Notion_Name, 
-                    "checkbox":  {
-                        "equals": True
+                    'property': Delete_Notion_Name, 
+                    'checkbox':  {
+                        'equals': True
                     }
                 }
             ]
@@ -1567,9 +1553,9 @@ if DELETE_OPTION == 0 and len(resultList) > 0: #delete gCal event (and Notion ta
         
         my_page = notion.pages.update( ##### Delete Notion task (diesn't work yet)
             **{
-                "page_id": pageId, 
-                "archived": True, 
-                "properties":{} 
+                'page_id': pageId, 
+                'archived': True, 
+                'properties':{} 
             },
         )
 

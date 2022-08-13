@@ -8,4 +8,4 @@ client_secret.json
 token.pkl
 config.py
 /.idea/*
-DS_Store
+.DS_Store
