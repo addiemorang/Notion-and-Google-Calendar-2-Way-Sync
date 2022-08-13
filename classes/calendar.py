@@ -5,24 +5,28 @@ from constants import GOOGLE_CALENDAR_STRPTME_FMT, GOOGLE_CALENDAR_STRPTME_FMT_D
 
 class Calendar(object):
 
-    def __init__(self, name, calendar_id):
+    def __init__(self, name, calendar_id, database_id):
         self.name = name
         self.calendar_id = calendar_id
+        self.database_id = database_id
 
         self.events = []
 
-    def initialize_events(self, event_data):
+    def initialize_events(self, event_data, notion_event_ids=None):
         for event in event_data:
             event_start = event['start']
             event_end = event['end']
             if 'dateTime' in event_start.keys() and 'dateTime' in event_end.keys():
                 start = self._to_python_datetime(event['start']['dateTime'])
                 end = self._to_python_datetime(event['end']['dateTime'])
+                all_day = False
             else:
                 start = self._to_python_date(event['start']['date'])
                 end = self._to_python_date(event['end']['date'])
+                all_day = True
 
             event_kwargs = {
+                'all_day': all_day,
                 'name': event['summary'],
                 'calendar': self,
                 'start': start,
@@ -46,7 +50,7 @@ class Calendar(object):
 
 class Event(object):
 
-    def __init__(self, event_id, name, description, start, end, calendar, all_day=False, source_url=None,
+    def __init__(self, event_id, name, description, start, end, calendar, all_day, source_url=None,
                  timezone='America/New_York'):
         self.event_id = event_id
         self.name = name

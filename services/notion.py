@@ -1,12 +1,14 @@
+from datetime import datetime
+
 from notion_client import Client
 
-from config import NOTION_TOKEN
+from settings.config import NOTION_TOKEN
 
 
 class NotionService:
-    """
+    '''
     service class for communicating with notion
-    """
+    '''
     TASK_PROPERTY = 'Task Name'
     DATE_PROPERTY = 'Date'
     INITIATIVE_PROPERTY = 'Initiative'
@@ -23,6 +25,90 @@ class NotionService:
         self.client = Client(auth=NOTION_TOKEN)
         self.pages = None
 
+    def create_event(self, event):
+        now = datetime.now().strftime('%Y-%m-%dT%H:%M:%S-04:00')
+
+        kwargs = {
+            'parent': {
+                'database_id': event.calendar.database_id,
+            },
+            'properties': {
+                self.TASK_PROPERTY: {
+                    'type': 'title',
+                    'title': [
+                        {
+                            'type': 'text',
+                            'text': {
+                                'content': event.name,
+                            },
+                        },
+                    ],
+                },
+                self.LAST_UPDATED_PROPERTY: {
+                    'type': 'date',
+                    'date': {
+                        'start': now,
+                        'end': None,
+                    }
+                },
+                self.EXTRA_INFO_PROPERTY: {
+                    'type': 'rich_text',
+                    'rich_text': [{
+                        'text': {
+                            'content': event.description,
+                        }
+                    }]
+                },
+                self.EVENT_ID_PROPERTY: {
+                    'type': 'rich_text',
+                    'rich_text': [{
+                        'text': {
+                            'content': event.event_id
+                        }
+                    }]
+                },
+                self.ON_GCAL_PROPERTY: {
+                    'type': 'checkbox',
+                    'checkbox': True
+                },
+                self.CURRENT_CALENDAR_ID_PROPERTY: {
+                    'rich_text': [{
+                        'text': {
+                            'content': event.calendar.calendar_id,
+                        }
+                    }]
+                },
+                self.CALENDAR_PROPERTY: {
+                    'select': {
+                        'name': event.calendar.name,
+                    },
+                },
+            },
+        }
+
+        if event.all_day:
+            kwargs.update({
+                self.DATE_PROPERTY: {
+                    'type': 'date',
+                    'date': {
+                        'start': event.start.strftime('%Y-%m-%d'),
+                        'end': event.end.strftime('%Y-%m-%d'),
+                    }
+                }
+            })
+        else:
+            kwargs.update({
+                self.DATE_PROPERTY: {
+                    'type': 'date',
+                    'date': {
+                        'start': event.start.strftime('%Y-%m-%dT%H:%M:%S-04:00'),
+                        'end': event.end.strftime('%Y-%m-%dT%H:%M:%S-04:00'),
+                    }
+                }
+            })
+
+        self.client.pages.create(**kwargs)
+
     def get_event_ids(self, database_id):
         db_pages = self.client.databases.query(
             **{
@@ -34,7 +120,7 @@ class NotionService:
                     },
                 },
             }
-        )
+        ).get('results')
         self.pages = db_pages
 
         event_ids = []
