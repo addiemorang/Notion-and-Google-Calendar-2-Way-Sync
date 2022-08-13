@@ -1,7 +1,7 @@
 import os
 import pickle
 
-from config import CREDS_PATH, DATABASE_ID, NOTION_TOKEN, PROJECT_PATH, ROOT_URL
+from config import CREDS_PATH, DATABASE_ID, DEFAULT_CALENDAR_ID, NOTION_TOKEN, PROJECT_PATH, ROOT_URL
 from datetime import datetime, timedelta
 from googleapiclient.discovery import build
 from notion_client import Client
@@ -34,9 +34,6 @@ AllDayEventOption = 0 #0 if you want dates on your Notion dashboard to be treate
 
 ### MULTIPLE CALENDAR PART:
 #  - VERY IMPORTANT: For each 'key' of the dictionary, make sure that you make that EXACT thing in the Notion database first before running the code. You WILL have an error and your dashboard/calendar will be messed up
-
-
-DEFAULT_CALENDAR_ID = 'addmorang@gmail.com' #The GCal calendar id. The format is something like 'sldkjfliksedjgodsfhgshglsj@group.calendar.google.com'
 
 DEFAULT_CALENDAR_NAME = 'Test'
 
