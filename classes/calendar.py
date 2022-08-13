@@ -3,48 +3,36 @@ from datetime import datetime
 from constants import GOOGLE_CALENDAR_STRPTME_FMT, GOOGLE_CALENDAR_STRPTME_FMT_DT
 
 
-class Calendar:
+class Calendar(object):
 
-    def __init__(self, name, calendar_id, resource):
+    def __init__(self, name, calendar_id):
         self.name = name
         self.calendar_id = calendar_id
-        self.resource = resource
 
         self.events = []
 
-    def initialize_events(self):
-        fetched_events = self._fetch_events()
-
-        for event in fetched_events:
+    def initialize_events(self, event_data):
+        for event in event_data:
             event_start = event['start']
             event_end = event['end']
-            if 'dateTime' in event_start.keys().update(event_end.keys()):
+            if 'dateTime' in event_start.keys() and 'dateTime' in event_end.keys():
                 start = self._to_python_datetime(event['start']['dateTime'])
                 end = self._to_python_datetime(event['end']['dateTime'])
             else:
-                start = self._to_python_date(event['start']['dateTime'])
-                end = self._to_python_date(event['end']['dateTime'])
+                start = self._to_python_date(event['start']['date'])
+                end = self._to_python_date(event['end']['date'])
 
             event_kwargs = {
-                'name': 'summary',
+                'name': event['summary'],
                 'calendar': self,
                 'start': start,
                 'end': end,
-                'id': event['id'],
-                'description': event['description']
+                'event_id': event['id'],
+                'description': event.get('description', None)
             }
 
             new_event = Event(**event_kwargs)
             self.events.append(new_event)
-
-    def _fetch_events(self):
-        now = datetime.now().strftime('%Y-%m-%dT%H:%M:%S') + '-04:00'
-
-        return self.resource.events().list(
-            calendarId=self.calendar_id,
-            maxResults=2000,
-            timeMin=now
-        ).execute()
 
     def _to_python_datetime(self, google_calendar_datetime):
         return datetime.strptime(google_calendar_datetime[:-6], GOOGLE_CALENDAR_STRPTME_FMT_DT)
@@ -52,8 +40,11 @@ class Calendar:
     def _to_python_date(self, google_calendar_date):
         return datetime.strptime(google_calendar_date, GOOGLE_CALENDAR_STRPTME_FMT)
 
+    def __str__(self):
+        return self.name
 
-class Event:
+
+class Event(object):
 
     def __init__(self, event_id, name, description, start, end, calendar, all_day=False, source_url=None,
                  timezone='America/New_York'):
@@ -81,3 +72,6 @@ class Event:
             'summary': self.name,
             'timezone': self.timezone,
         }
+
+    def __str__(self):
+        return self.name

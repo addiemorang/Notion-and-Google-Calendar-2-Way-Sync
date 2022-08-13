@@ -1,31 +1,48 @@
 import logging
 import pickle
+from datetime import datetime
 
-from constants import CLIENT_SECRET_FILE_NAME, GOOGLE_CALENDAR_API_URL
+from constants import CLIENT_SECRET_FILE_PATH, GOOGLE_CALENDAR_API_URL
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 from google_auth_oauthlib.flow import InstalledAppFlow
+
+from settings.config import CREDS_PATH, PROJECT_PATH
 
 
 class GoogleService:
 
     def __init__(self):
-        self.credentials = self.get_credentials()
-        self.service = build('calendar', 'v3', credentials=self.credentials)
+        self.credentials = pickle.load(open(CREDS_PATH, "rb"))
+        self.api = self.get_api_resource()
 
-    def get_calendar_resource(self, calendar_id):
+    def get_api_resource(self):
         try:
-            calendar = self.service.calendars().get(calendarId=calendar_id).execute()
-            return calendar
+            return build('calendar', 'v3', credentials=self.credentials)
         except HttpError as e:
-            logging.info(e)
+            logging.info(f'Error: {e}. Updating credentials')
+            self.credentials = self.update_credentials()
 
-    def get_credentials(self):
-        oauth_flow = InstalledAppFlow.from_client_secrets_file(CLIENT_SECRET_FILE_NAME, scopes=[GOOGLE_CALENDAR_API_URL])
+            return build('calendar', 'v3', credentials=self.credentials)
+
+    def get_calendar_event_data(self, calendar_id):
+        now = datetime.now().strftime('%Y-%m-%dT%H:%M:%S') + '-04:00'
+
+        return self.api.events().list(
+            calendarId=calendar_id,
+            maxResults=2000,
+            timeMin=now
+        ).execute()
+
+    def update_credentials(self):
+        oauth_flow = InstalledAppFlow.from_client_secrets_file(
+            f'{PROJECT_PATH}{CLIENT_SECRET_FILE_PATH}',
+            scopes=[GOOGLE_CALENDAR_API_URL],
+        )
         oauth_credentials = oauth_flow.run_console()
 
         # Not sure why we're doing this
-        pickle.dump(oauth_credentials, open('token.pkl', 'wb'))
-        credentials = pickle.load(open('token.pkl', 'rb'))
+        pickle.dump(oauth_credentials, open(CREDS_PATH, 'wb'))
+        credentials = pickle.load(open(CREDS_PATH, 'rb'))
 
         return credentials
