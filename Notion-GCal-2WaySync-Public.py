@@ -1,27 +1,25 @@
 import os
-from notion_client import Client
-from datetime import datetime, timedelta, date
-from googleapiclient.discovery import build
-from google_auth_oauthlib.flow import InstalledAppFlow
 import pickle
+
+from config import DATABASE_ID, NOTION_TOKEN
+from datetime import datetime, timedelta
+from googleapiclient.discovery import build
+from notion_client import Client
 
 
 ###########################################################################
 ##### The Set-Up Section. Please follow the comments to understand the code. 
 ###########################################################################
 
+database_id = "001c20e4674146f2af38ae27105fec9a" #get the mess of numbers before the "?" on your dashboard URL (no need to split into dashes)
 
-NOTION_TOKEN = "" #the secret_something from Notion Integration
+urlRoot = 'https://www.notion.so/addie-morang/001c20e4674146f2af38ae27105fec9a?v=8275a4c133704d8bab6ecef8ba3fdc2b&p=' #open up a task and then copy the URL root up to the "p="
 
-database_id = "" #get the mess of numbers before the "?" on your dashboard URL (no need to split into dashes)
-
-urlRoot = 'https://www.notion.so/akarri/2583098dfd32472ab6ca1ff2a8b2866d?v=3a1adf60f15748f08ed925a2eca88421&p=' #open up a task and then copy the URL root up to the "p="
-
-runScript = "python3 GCalToken.py" #This is the command you will be feeding into the command prompt to run the GCalToken program
+runScript = "python3 /Users/addiemorang/notion/Notion-and-Google-Calendar-2-Way-Sync/GCalToken.py" #This is the command you will be feeding into the command prompt to run the GCalToken program
 
 #GCal Set Up Part
 
-credentialsLocation = "token.pkl" #This is where you keep the pickle file that has the Google Calendar Credentials
+credentialsLocation = "/Users/addiemorang/notion/Notion-and-Google-Calendar-2-Way-Sync/token.pkl" #This is where you keep the pickle file that has the Google Calendar Credentials
 
 
 DEFAULT_EVENT_LENGTH = 60 #This is how many minutes the default event length is. Feel free to change it as you please
@@ -52,7 +50,7 @@ AllDayEventOption = 0 #0 if you want dates on your Notion dashboard to be treate
 #  - VERY IMPORTANT: For each 'key' of the dictionary, make sure that you make that EXACT thing in the Notion database first before running the code. You WILL have an error and your dashboard/calendar will be messed up
 
 
-DEFAULT_CALENDAR_ID = '565bdjsqmautc214vcimtn5kso@group.calendar.google.com' #The GCal calendar id. The format is something like "sldkjfliksedjgodsfhgshglsj@group.calendar.google.com"
+DEFAULT_CALENDAR_ID = 'addmorang@gmail.com' #The GCal calendar id. The format is something like "sldkjfliksedjgodsfhgshglsj@group.calendar.google.com"
 
 DEFAULT_CALENDAR_NAME = 'Test'
 
@@ -61,8 +59,6 @@ DEFAULT_CALENDAR_NAME = 'Test'
 #the structure should be as follows:              WHAT_THE_OPTION_IN_NOTION_IS_CALLED : GCAL_CALENDAR_ID 
 calendarDictionary = {
     DEFAULT_CALENDAR_NAME : DEFAULT_CALENDAR_ID, 
-    'Test' : 'fd34893uklhjdflgkjsdafdfjklsd@group.calendar.google.com', #just typed some random ids but put the one for your calendars here
-    'New Test' : 'skdhvjhefoierjkh345378khkh@group.calendar.google.com'
 }
 
 
@@ -393,7 +389,7 @@ todayDate = datetime.today().strftime("%Y-%m-%d")
 
 my_page = notion.databases.query(  #this query will return a dictionary that we will parse for information that we want
     **{
-        "database_id": database_id, 
+        "database_id": DATABASE_ID, 
         "filter": {
             "and": [
                 {
@@ -578,7 +574,7 @@ else:
 #this queries items in the next week where the Calendar select thing is empty
 my_page = notion.databases.query(  
     **{
-        "database_id": database_id, 
+        "database_id": DATABASE_ID, 
         "filter": {
             "and": [
                 {
@@ -644,7 +640,7 @@ if len(resultList) > 0:
 #look for events that are today or in the next week
 my_page = notion.databases.query(  
     **{
-        "database_id": database_id, 
+        "database_id": DATABASE_ID, 
         "filter": {
             "and": [
                 {
@@ -802,7 +798,7 @@ todayDate = datetime.today().strftime("%Y-%m-%d")
 ##Query notion tasks already in Gcal, don't have to be updated, and are today or in the next week
 my_page = notion.databases.query( 
     **{
-        "database_id": database_id,
+        "database_id": DATABASE_ID,
         "filter": {
             "and": [
                 {
@@ -1199,7 +1195,7 @@ for i, gCalId in enumerate(gCal_CalIds): #instead of checking, just update the n
 
 my_page = notion.databases.query( 
     **{
-        "database_id": database_id,
+        "database_id": DATABASE_ID,
         "filter": {
                 "and": [
                 {
@@ -1221,7 +1217,7 @@ my_page = notion.databases.query(
 
 my_page = notion.databases.query( 
     **{
-        "database_id": database_id,
+        "database_id": DATABASE_ID,
         "filter": {
             "property": GCalEventId_Notion_Name, 
             "text":  {
@@ -1253,11 +1249,18 @@ calItems = events
 
 calName = [item['summary'] for item in calItems]
 
-gCal_calendarId = [item['organizer']['email'] for item in calItems] #this is to get all of the calendarIds for each event
+gCal_calendarId = [item['creator']['email'] for item in calItems] #this is to get all of the calendarIds for each event
 
 CalNames = list(calendarDictionary.keys())
 CalIds = list(calendarDictionary.values())
+print(gCal_calendarId)
+print(CalNames)
+print(CalIds)
+
+
 gCal_calendarName = [ CalNames[CalIds.index(x)] for x in gCal_calendarId]
+
+# gCal_calendarName = [list(calendarDictionary.keys())[0]]
 
 calStartDates = []
 calEndDates = []
@@ -1300,7 +1303,7 @@ for i in range(len(calIds)):
             my_page = notion.pages.create(
                 **{
                     "parent": {
-                        "database_id": database_id,
+                        "database_id": DATABASE_ID,
                     },
                     "properties": {
                         Task_Notion_Name: {
@@ -1371,7 +1374,7 @@ for i in range(len(calIds)):
             my_page = notion.pages.create(
                 **{
                     "parent": {
-                        "database_id": database_id,
+                        "database_id": DATABASE_ID,
                     },
                     "properties": {
                         Task_Notion_Name: {
@@ -1440,7 +1443,7 @@ for i in range(len(calIds)):
             my_page = notion.pages.create(
                 **{
                     "parent": {
-                        "database_id": database_id,
+                        "database_id": DATABASE_ID,
                     },
                     "properties": {
                         Task_Notion_Name: {
@@ -1516,7 +1519,7 @@ for i in range(len(calIds)):
 
 my_page = notion.databases.query( 
     **{
-        "database_id": database_id,
+        "database_id": DATABASE_ID,
         "filter": {
             "and":[
                 {

@@ -6,3 +6,6 @@ venv/
 # other credentials
 client_secret.json
 token.pkl
+config.py
+/.idea/*
+DS_Store
