@@ -16,10 +16,11 @@ default_calendar = Calendar(
 notion_event_ids = notion_service.get_event_ids(config.DATABASE_ID)
 
 default_calendar_event_data = google_service.get_calendar_event_data(default_calendar.calendar_id).get('items')
-default_calendar.initialize_events(default_calendar_event_data, notion_event_ids)
+default_calendar.initialize_events(default_calendar_event_data)
 
 for event in default_calendar.events:
-    print(event)
+    if event.event_id not in notion_event_ids:
+        notion_service.create_event(event)
 
 
 # clean up

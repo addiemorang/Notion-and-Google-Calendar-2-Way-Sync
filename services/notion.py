@@ -1,4 +1,5 @@
-from datetime import datetime
+import logging
+from datetime import datetime, timedelta
 
 from notion_client import Client
 
@@ -87,17 +88,29 @@ class NotionService:
         }
 
         if event.all_day:
-            kwargs.update({
-                self.DATE_PROPERTY: {
-                    'type': 'date',
-                    'date': {
-                        'start': event.start.strftime('%Y-%m-%d'),
-                        'end': event.end.strftime('%Y-%m-%d'),
+            days_between = event.end-event.start
+            if days_between.days == 1:
+                kwargs['properties'].update({
+                    self.DATE_PROPERTY: {
+                        'type': 'date',
+                        'date': {
+                            'start': event.start.strftime('%Y-%m-%d'),
+                            'end': None,
+                        }
                     }
-                }
-            })
+                })
+            else:
+                kwargs['properties'].update({
+                    self.DATE_PROPERTY: {
+                        'type': 'date',
+                        'date': {
+                            'start': event.start.strftime('%Y-%m-%d'),
+                            'end': event.end.strftime('%Y-%m-%d'),
+                        }
+                    }
+                })
         else:
-            kwargs.update({
+            kwargs['properties'].update({
                 self.DATE_PROPERTY: {
                     'type': 'date',
                     'date': {
@@ -108,6 +121,8 @@ class NotionService:
             })
 
         self.client.pages.create(**kwargs)
+
+        logging.info(f'Created event {event.name} in Notion')
 
     def get_event_ids(self, database_id):
         db_pages = self.client.databases.query(

@@ -12,8 +12,10 @@ class Calendar(object):
 
         self.events = []
 
-    def initialize_events(self, event_data, notion_event_ids=None):
+    def initialize_events(self, event_data):
         for event in event_data:
+
+            # configure start and end dates
             event_start = event['start']
             event_end = event['end']
             if 'dateTime' in event_start.keys() and 'dateTime' in event_end.keys():
@@ -25,6 +27,11 @@ class Calendar(object):
                 end = self._to_python_date(event['end']['date'])
                 all_day = True
 
+            # configure description
+            event_description = event.get('description', None)
+            if not event_description:
+                event_description = ''
+
             event_kwargs = {
                 'all_day': all_day,
                 'name': event['summary'],
@@ -32,7 +39,7 @@ class Calendar(object):
                 'start': start,
                 'end': end,
                 'event_id': event['id'],
-                'description': event.get('description', None)
+                'description': event_description
             }
 
             new_event = Event(**event_kwargs)
